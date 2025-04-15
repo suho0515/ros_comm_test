@@ -1,3 +1,0 @@
-[submodule "humble_jazzy_fastdds/ros1_bridge"]
-	path = humble_jazzy_fastdds/ros1_bridge
-	url = https://github.com/ros2/ros1_bridge.git
