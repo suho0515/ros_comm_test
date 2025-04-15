@@ -12,9 +12,9 @@ services:
     environment:
       - ROS_DOMAIN_ID=42
       - DISPLAY=${DISPLAY}
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    command: ros2 run test_nodes publisher_node
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+    command: ros2 run test_nodes publisher_node --ros-args --log-level debug
     tty: true
     stdin_open: true
 
@@ -31,9 +31,9 @@ services:
     environment:
       - ROS_DOMAIN_ID=42
       - DISPLAY=${DISPLAY}
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    command: ros2 run test_nodes subscriber_node
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+    command: ros2 run test_nodes subscriber_node --ros-args --log-level debug
     tty: true
     stdin_open: true
 
@@ -44,7 +44,9 @@ services:
     network_mode: "host"
     environment:
       - ROS_DOMAIN_ID=42
-    command: ros2 run test_nodes test_publisher.py
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+    command: ros2 run test_nodes test_publisher.py --ros-args --log-level debug
     profiles:
       - python_test
     tty: true
@@ -58,7 +60,9 @@ services:
       - ros_humble_python
     environment:
       - ROS_DOMAIN_ID=42
-    command: ros2 run test_nodes test_subscriber.py
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+    command: ros2 run test_nodes test_subscriber.py --ros-args --log-level debug
     profiles:
       - python_test
     tty: true
