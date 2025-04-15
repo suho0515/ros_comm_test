@@ -1,6 +1,21 @@
-# ROS Humble과 Jazzy 통신 테스트
+# ROS Humble과 Jazzy 통신 테스트 (FastRTPS/FastDDS)
 
-이 프로젝트는 ROS Humble과 ROS Jazzy 간의 통신 호환성을 테스트하기 위한 환경을 제공합니다.
+이 프로젝트는 ROS Humble과 ROS Jazzy 간의 통신 호환성을 FastRTPS/FastDDS를 사용하여 테스트하기 위한 환경을 제공합니다.
+
+## FastRTPS/FastDDS 테스트 결과
+
+**결과: ❌ 실패**
+
+서로 다른 ROS 2 배포판(Humble과 Jazzy) 간 FastRTPS/FastDDS를 사용한 통신 테스트는 실패했습니다. 
+Publisher(Humble)에서 메시지를 발행했으나 Subscriber(Jazzy)에서 메시지를 수신하지 못했습니다.
+
+### 가능한 원인:
+1. FastRTPS는 타입 호환성에 더 엄격합니다.
+2. 서로 다른 ROS 2 배포판 간 타입 해시 불일치 문제가 발생합니다.
+3. QoS(Quality of Service) 설정 불일치가 있을 수 있습니다.
+
+### 권장 사항:
+서로 다른 ROS 2 배포판 간 통신이 필요한 경우 CycloneDDS를 사용하는 것을 권장합니다. 자세한 내용은 [메인 README](../README.md)를 참조하세요.
 
 ## 구조
 
@@ -16,7 +31,7 @@
 
 1. 이미지 빌드 및 실행:
 ```bash
-cd humble_jazzy
+cd humble_jazzy_fastdds
 docker-compose build
 docker-compose up
 ```
@@ -30,7 +45,7 @@ docker-compose up
 
 1. 빌드 및 실행:
 ```bash
-cd humble_jazzy
+cd humble_jazzy_fastdds
 docker-compose --profile python_test up
 ```
 

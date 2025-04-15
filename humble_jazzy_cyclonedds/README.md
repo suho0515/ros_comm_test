@@ -1,6 +1,22 @@
-# ROS Humble과 Jazzy 통신 테스트
+# ROS Humble과 Jazzy 통신 테스트 (CycloneDDS)
 
-이 프로젝트는 ROS Humble과 ROS Jazzy 간의 통신 호환성을 테스트하기 위한 환경을 제공합니다.
+이 프로젝트는 ROS Humble과 ROS Jazzy 간의 통신 호환성을 CycloneDDS를 사용하여 테스트하기 위한 환경을 제공합니다.
+
+## CycloneDDS 테스트 결과
+
+**결과: ✅ 성공**
+
+서로 다른 ROS 2 배포판(Humble과 Jazzy) 간 CycloneDDS를 사용한 통신 테스트는 성공했습니다.
+Publisher(Humble)에서 발행한 메시지가 Subscriber(Jazzy)에서 정상적으로 수신되었습니다.
+
+### 장점:
+1. CycloneDDS는 서로 다른 ROS 2 배포판 간에 뛰어난 호환성을 제공합니다.
+2. 타입 해시 불일치 문제에 대해 더 관대하게 처리합니다.
+3. 별도의 XML 설정 파일 없이도 잘 작동합니다.
+
+### 권장 사항:
+서로 다른 ROS 2 배포판 간 통신이 필요한 경우 CycloneDDS를 사용하는 것을 적극 권장합니다.
+자세한 비교 결과는 [메인 README](../README.md)를 참조하세요.
 
 ## 구조
 
@@ -16,7 +32,7 @@
 
 1. 이미지 빌드 및 실행:
 ```bash
-cd humble_jazzy
+cd humble_jazzy_cyclonedds
 docker-compose build
 docker-compose up
 ```
@@ -30,7 +46,7 @@ docker-compose up
 
 1. 빌드 및 실행:
 ```bash
-cd humble_jazzy
+cd humble_jazzy_cyclonedds
 docker-compose --profile python_test up
 ```
 
