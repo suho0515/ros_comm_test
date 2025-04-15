@@ -1,0 +1,117 @@
+# ROS Humble과 Jazzy 통신 테스트
+
+이 프로젝트는 ROS Humble과 ROS Jazzy 간의 통신 호환성을 테스트하기 위한 환경을 제공합니다.
+
+## 구조
+
+- `src/test_msgs`: 테스트에 사용되는 메시지 정의
+- `src/test_nodes`: 테스트 노드 (C++ 및 Python)
+- `Dockerfile.humble`: ROS Humble 환경을 위한 Dockerfile
+- `Dockerfile.jazzy`: ROS Jazzy 환경을 위한 Dockerfile
+- `ros_entrypoint.sh`: ROS 환경 설정을 위한 엔트리포인트 스크립트
+
+## 사용 방법
+
+### 이미지 빌드 및 실행
+
+1. 이미지 빌드 및 실행:
+```bash
+cd humble_jazzy
+docker-compose build
+docker-compose up
+```
+
+이 명령은 다음을 수행합니다:
+- Dockerfile을 사용하여 ROS Humble 및 Jazzy 환경의 이미지를 빌드합니다.
+- Humble 환경에서 Publisher 노드를 실행합니다.
+- Jazzy 환경에서 Subscriber 노드를 실행합니다.
+
+### Python 노드로 테스트
+
+1. 빌드 및 실행:
+```bash
+cd humble_jazzy
+docker-compose --profile python_test up
+```
+
+### 개별적으로 실행하기
+
+Humble Publisher만 실행:
+```bash
+docker-compose up ros_humble
+```
+
+Jazzy Subscriber만 실행:
+```bash
+docker-compose up ros_jazzy
+```
+
+## 테스트 내용
+
+이 테스트는 ROS Humble에서 발행된 메시지가 ROS Jazzy 환경에서 정상적으로 수신되는지 확인합니다.
+테스트 메시지에는 다음 필드가 포함됩니다:
+- `id`: 메시지 ID (정수)
+- `message`: 텍스트 메시지 (문자열)
+- `data`: 숫자 데이터 (부동소수점)
+- `stamp`: 타임스탬프 (시간)
+
+Subscriber 노드는 메시지 수신 시 지연 시간을 계산하여 표시합니다.
+
+## Dockerfile 접근 방식의 장점
+
+1. 미리 빌드된 이미지를 사용하므로 실행 시간이 단축됩니다.
+2. 빌드 환경과 실행 환경이 분리되어 있습니다.
+3. 빌드된 이미지를 재사용할 수 있습니다.
+4. 코드 변경이 없다면 빌드 단계를 건너뛸 수 있습니다.
+
+## 문제 해결
+
+호스트 네트워크 모드를 사용하므로 로컬 네트워크 설정에 따라 통신이 영향을 받을 수 있습니다.
+문제가 발생할 경우 다음을 확인하세요:
+- 방화벽 설정
+- ROS_DOMAIN_ID 설정
+- Docker 네트워크 설정 
+
+### 시간 소스 불일치 문제 해결
+
+ROS2의 다른 배포판 간 통신 시 (예: Humble과 Jazzy) 다음과 같은 런타임 오류가 발생할 수 있습니다:
+```
+terminate called after throwing an instance of 'std::runtime_error'
+what(): can't subtract times with different time sources [1 != 2]
+```
+
+이 오류는 서로 다른 시간 소스를 가진 타임스탬프를 비교하거나 연산하려고 할 때 발생합니다.
+
+#### 원인
+- ROS2에서는 RCL_SYSTEM_TIME(1)과 RCL_ROS_TIME(2)의 두 가지 주요 시간 소스를 사용합니다.
+- 기본 생성자 `rclcpp::Time(msg->stamp.sec, msg->stamp.nanosec)`는 기본적으로 RCL_SYSTEM_TIME을 사용합니다.
+- `node->now()`는 RCL_ROS_TIME을 사용합니다.
+- 서로 다른 시간 소스를 가진 시간끼리는 연산(예: 뺄셈)이 불가능합니다.
+
+#### 해결 방법
+메시지의 타임스탬프를 사용할 때는 명시적으로 시간 소스를 지정해야 합니다:
+
+```cpp
+// 잘못된 방법 (오류 발생)
+auto now = this->now();  // RCL_ROS_TIME 사용
+auto msg_time = rclcpp::Time(msg->stamp.sec, msg->stamp.nanosec);  // 기본값 RCL_SYSTEM_TIME 사용
+auto latency = now - msg_time;  // 오류: 서로 다른 시간 소스
+
+// 올바른 방법
+auto now = this->now();  // RCL_ROS_TIME 사용
+auto msg_time = rclcpp::Time(msg->stamp.sec, msg->stamp.nanosec, RCL_ROS_TIME);  // 명시적으로 RCL_ROS_TIME 지정
+auto latency = now - msg_time;  // 정상 작동
+```
+
+이는 특히 다음과 같은 상황에서 발생할 수 있습니다:
+- 서로 다른 ROS2 배포판 간 통신 (예: Humble과 Jazzy)
+- message_filters 또는 tf와 같은 라이브러리 사용
+- 메시지의 타임스탬프를 이용한 시간 계산
+
+#### CycloneDDS의 장점
+CycloneDDS를 RMW 구현체로 사용하면 다른 배포판 간 호환성이 향상될 수 있습니다. 다음과 같이 설정하세요:
+```bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+```
+
+이 프로젝트는 docker-compose.yml에 이미 이 설정을 포함하고 있습니다. 

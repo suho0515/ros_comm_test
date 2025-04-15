@@ -1,0 +1,26 @@
+FROM osrf/ros:humble-desktop
+
+WORKDIR /workspace
+
+# 필요한 도구 설치
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# 소스 코드 복사
+COPY src/ /workspace/src/
+
+# 패키지 빌드
+RUN . /opt/ros/humble/setup.sh && \
+    colcon build --packages-select test_msgs test_nodes
+
+# 환경 설정
+RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
+    echo "source /workspace/install/setup.bash" >> /root/.bashrc
+
+# 진입점 설정
+COPY ros_entrypoint.sh /
+RUN chmod +x /ros_entrypoint.sh
+ENTRYPOINT ["/ros_entrypoint.sh"]
+
+CMD ["bash"] 
