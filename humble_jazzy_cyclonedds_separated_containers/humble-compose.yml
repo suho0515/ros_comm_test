@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  # ROS Humble 이미지 빌드
+  ros_humble:
+    build:
+      context: .
+      dockerfile: Dockerfile.humble
+    image: humble_test:latest
+    container_name: ros_humble
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=42
+      - DISPLAY=${DISPLAY}
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    command: ros2 run test_nodes publisher_node --ros-args --log-level debug
+    tty: true
+    stdin_open: true 

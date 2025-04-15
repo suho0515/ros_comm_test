@@ -7,6 +7,7 @@
 - `humble_jazzy_cyclonedds/`: CycloneDDS를 사용한 ROS Humble-Jazzy 통신 테스트
 - `humble_jazzy_fastdds/`: FastRTPS(FastDDS)를 사용한 ROS Humble-Jazzy 통신 테스트
 - `humble_jazzy_cyclonedds_custom_msgs/`: CycloneDDS를 사용한 ROS Humble-Jazzy 커스텀 메시지 통신 테스트
+- `humble_jazzy_cyclonedds_separated_containers/`: 분리된 컨테이너에서의 ROS Humble-Jazzy 통신 테스트
 
 ## DDS 구현체 테스트 결과
 
@@ -42,6 +43,16 @@ float64 data
 builtin_interfaces/Time stamp
 ```
 
+### 분리된 컨테이너 테스트
+
+서로 다른 Docker Compose 파일로 실행된 별도의 컨테이너 간 통신도 테스트하였습니다:
+
+| 테스트 환경 | 통신 방식 | 통신 성공 여부 |
+|------------|----------|----------------|
+| CycloneDDS | 분리된 컨테이너 | ❓ 테스트 중 |
+
+이 테스트는 서로 다른 시작 시간을 가진 컨테이너 간에도 ROS 2의 동적 노드 검색 기능이 작동하는지 확인하고, 실제 운영 환경과 더 유사한 조건에서의 통신 호환성을 검증합니다.
+
 ### 결론
 
 ROS 2의 서로 다른 배포판 간 통신을 위해서는 **CycloneDDS**를 사용하는 것이 권장됩니다. CycloneDDS는 다음과 같은 이점을 제공합니다:
@@ -59,3 +70,4 @@ FastRTPS(FastDDS)는 기본 DDS 구현체이지만, 다른 ROS 2 배포판 간 �
 - [CycloneDDS 테스트](./humble_jazzy_cyclonedds/README.md)
 - [FastRTPS 테스트](./humble_jazzy_fastdds/README.md)
 - [커스텀 메시지 테스트 (CycloneDDS)](./humble_jazzy_cyclonedds_custom_msgs/README.md)
+- [분리된 컨테이너 테스트](./humble_jazzy_cyclonedds_separated_containers/README.md)

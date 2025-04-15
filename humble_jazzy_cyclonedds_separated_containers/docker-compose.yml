@@ -1,0 +1,102 @@
+version: '3'
+
+services:
+  # ROS Humble 이미지 빌드
+  ros_humble:
+    build:
+      context: .
+      dockerfile: Dockerfile.humble
+    image: humble_test:latest
+    container_name: ros_humble
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=42
+      - DISPLAY=${DISPLAY}
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    command: ros2 run test_nodes publisher_node --ros-args --log-level debug
+    tty: true
+    stdin_open: true
+
+  # ROS Jazzy 이미지 빌드
+  ros_jazzy:
+    build:
+      context: .
+      dockerfile: Dockerfile.jazzy
+    image: jazzy_test:latest
+    container_name: ros_jazzy
+    network_mode: "host"
+    depends_on:
+      - ros_humble
+    environment:
+      - ROS_DOMAIN_ID=42
+      - DISPLAY=${DISPLAY}
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    command: ros2 run test_nodes subscriber_node --ros-args --log-level debug
+    tty: true
+    stdin_open: true
+
+  # 디버깅용 서비스
+  humble_debug:
+    image: humble_test:latest
+    container_name: humble_debug
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=42
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    command: bash -c "sleep 5 && echo '===== TOPIC LIST =====' && ros2 topic list && echo '===== NODE LIST =====' && ros2 node list && echo '===== TOPIC INFO =====' && ros2 topic info /test_topic"
+    depends_on:
+      - ros_humble
+      - ros_jazzy
+    profiles:
+      - debug
+
+  jazzy_debug:
+    image: jazzy_test:latest
+    container_name: jazzy_debug
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=42
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    command: bash -c "sleep 10 && echo '===== TOPIC LIST =====' && ros2 topic list && echo '===== NODE LIST =====' && ros2 node list && echo '===== TOPIC INFO =====' && ros2 topic info /test_topic"
+    depends_on:
+      - ros_humble
+      - ros_jazzy
+    profiles:
+      - debug
+
+  # Python 테스트를 위한 서비스
+  ros_humble_python:
+    image: humble_test:latest
+    container_name: ros_humble_python
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=42
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    command: ros2 run test_nodes test_publisher.py --ros-args --log-level debug
+    profiles:
+      - python_test
+    tty: true
+    stdin_open: true
+
+  ros_jazzy_python:
+    image: jazzy_test:latest
+    container_name: ros_jazzy_python
+    network_mode: "host"
+    depends_on:
+      - ros_humble_python
+    environment:
+      - ROS_DOMAIN_ID=42
+      - "RCUTILS_CONSOLE_OUTPUT_FORMAT=[{severity}] [{name}]: {message}"
+      - RCUTILS_COLORIZED_OUTPUT=1
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    command: ros2 run test_nodes test_subscriber.py --ros-args --log-level debug
+    profiles:
+      - python_test
+    tty: true
+    stdin_open: true 
