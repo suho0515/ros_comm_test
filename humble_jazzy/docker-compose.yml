@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+  # ROS Humble 이미지 빌드
+  ros_humble:
+    build:
+      context: .
+      dockerfile: Dockerfile.humble
+    image: humble_test:latest
+    container_name: ros_humble
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=42
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command: ros2 run test_nodes publisher_node
+    tty: true
+    stdin_open: true
+
+  # ROS Jazzy 이미지 빌드
+  ros_jazzy:
+    build:
+      context: .
+      dockerfile: Dockerfile.jazzy
+    image: jazzy_test:latest
+    container_name: ros_jazzy
+    network_mode: "host"
+    depends_on:
+      - ros_humble
+    environment:
+      - ROS_DOMAIN_ID=42
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command: ros2 run test_nodes subscriber_node
+    tty: true
+    stdin_open: true
+
+  # Python 테스트를 위한 서비스
+  ros_humble_python:
+    image: humble_test:latest
+    container_name: ros_humble_python
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=42
+    command: ros2 run test_nodes test_publisher.py
+    profiles:
+      - python_test
+    tty: true
+    stdin_open: true
+
+  ros_jazzy_python:
+    image: jazzy_test:latest
+    container_name: ros_jazzy_python
+    network_mode: "host"
+    depends_on:
+      - ros_humble_python
+    environment:
+      - ROS_DOMAIN_ID=42
+    command: ros2 run test_nodes test_subscriber.py
+    profiles:
+      - python_test
+    tty: true
+    stdin_open: true 
