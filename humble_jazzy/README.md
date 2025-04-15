@@ -71,3 +71,47 @@ Subscriber 노드는 메시지 수신 시 지연 시간을 계산하여 표시�
 - 방화벽 설정
 - ROS_DOMAIN_ID 설정
 - Docker 네트워크 설정 
+
+### 시간 소스 불일치 문제 해결
+
+ROS2의 다른 배포판 간 통신 시 (예: Humble과 Jazzy) 다음과 같은 런타임 오류가 발생할 수 있습니다:
+```
+terminate called after throwing an instance of 'std::runtime_error'
+what(): can't subtract times with different time sources [1 != 2]
+```
+
+이 오류는 서로 다른 시간 소스를 가진 타임스탬프를 비교하거나 연산하려고 할 때 발생합니다.
+
+#### 원인
+- ROS2에서는 RCL_SYSTEM_TIME(1)과 RCL_ROS_TIME(2)의 두 가지 주요 시간 소스를 사용합니다.
+- 기본 생성자 `rclcpp::Time(msg->stamp.sec, msg->stamp.nanosec)`는 기본적으로 RCL_SYSTEM_TIME을 사용합니다.
+- `node->now()`는 RCL_ROS_TIME을 사용합니다.
+- 서로 다른 시간 소스를 가진 시간끼리는 연산(예: 뺄셈)이 불가능합니다.
+
+#### 해결 방법
+메시지의 타임스탬프를 사용할 때는 명시적으로 시간 소스를 지정해야 합니다:
+
+```cpp
+// 잘못된 방법 (오류 발생)
+auto now = this->now();  // RCL_ROS_TIME 사용
+auto msg_time = rclcpp::Time(msg->stamp.sec, msg->stamp.nanosec);  // 기본값 RCL_SYSTEM_TIME 사용
+auto latency = now - msg_time;  // 오류: 서로 다른 시간 소스
+
+// 올바른 방법
+auto now = this->now();  // RCL_ROS_TIME 사용
+auto msg_time = rclcpp::Time(msg->stamp.sec, msg->stamp.nanosec, RCL_ROS_TIME);  // 명시적으로 RCL_ROS_TIME 지정
+auto latency = now - msg_time;  // 정상 작동
+```
+
+이는 특히 다음과 같은 상황에서 발생할 수 있습니다:
+- 서로 다른 ROS2 배포판 간 통신 (예: Humble과 Jazzy)
+- message_filters 또는 tf와 같은 라이브러리 사용
+- 메시지의 타임스탬프를 이용한 시간 계산
+
+#### CycloneDDS의 장점
+CycloneDDS를 RMW 구현체로 사용하면 다른 배포판 간 호환성이 향상될 수 있습니다. 다음과 같이 설정하세요:
+```bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+```
+
+이 프로젝트는 docker-compose.yml에 이미 이 설정을 포함하고 있습니다. 

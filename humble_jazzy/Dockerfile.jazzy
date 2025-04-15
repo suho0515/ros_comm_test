@@ -8,9 +8,6 @@ RUN apt-get update && apt-get install -y \
     ros-jazzy-rmw-cyclonedds-cpp \
     && rm -rf /var/lib/apt/lists/*
 
-# FastDDS 설정 파일 복사
-COPY fastdds_config.xml /fastdds_config.xml
-
 # 소스 코드 복사
 COPY src/ /workspace/src/
 

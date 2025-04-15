@@ -24,7 +24,7 @@ private:
                 msg->id, msg->message.c_str(), msg->data);
                 
     auto now = this->now();
-    auto msg_time = rclcpp::Time(msg->stamp.sec, msg->stamp.nanosec);
+    auto msg_time = rclcpp::Time(msg->stamp.sec, msg->stamp.nanosec, RCL_ROS_TIME);
     auto latency = now - msg_time;
     double latency_ms = latency.nanoseconds() / 1000000.0;
     
